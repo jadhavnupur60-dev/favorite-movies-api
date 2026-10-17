@@ -4,6 +4,9 @@ const express = require("express");
 const app = express();
 const PORT = 3000;
 
+// Middleware to read JSON request bodies
+app.use(express.json());
+
 // Favorite movies data
 const movies = [
     {
@@ -48,13 +51,35 @@ app.get("/", (req, res) => {
     res.send("Welcome to the Favorite Movies API!");
 });
 
-// GET endpoint to return movies as JSON
+// GET: Return all movies
 app.get("/movies", (req, res) => {
     res.json(movies);
+});
+
+// GET: Find one movie by ID
+app.get("/movies/:id", (req, res) => {
+    const movieId = Number(req.params.id);
+
+    if (!Number.isInteger(movieId) || movieId <= 0) {
+        return res.status(400).json({
+            message: "Please provide a valid movie ID"
+        });
+    }
+
+    const movie = movies.find((m) => m.id === movieId);
+
+    if (!movie) {
+        return res.status(404).json({
+            message: "Movie not found"
+        });
+    }
+
+    res.json(movie);
 });
 
 // Start the server
 app.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
-    console.log(`Movies API: http://localhost:${PORT}/movies`);
+    console.log(`All movies: http://localhost:${PORT}/movies`);
+    console.log(`Find a movie: http://localhost:${PORT}/movies/1`);
 });
