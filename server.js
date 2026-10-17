@@ -56,7 +56,7 @@ app.get("/movies", (req, res) => {
     res.json(movies);
 });
 
-// GET: Find one movie by ID
+// GET: Find a movie by ID
 app.get("/movies/:id", (req, res) => {
     const movieId = Number(req.params.id);
 
@@ -75,6 +75,72 @@ app.get("/movies/:id", (req, res) => {
     }
 
     res.json(movie);
+});
+
+// POST: Add a new movie
+app.post("/movies", (req, res) => {
+    const { title, genre, year, rating } = req.body;
+
+    // Validate movie details
+    if (
+        typeof title !== "string" ||
+        !title.trim() ||
+        typeof genre !== "string" ||
+        !genre.trim() ||
+        !Number.isInteger(year) ||
+        year < 1888 ||
+        year > new Date().getFullYear() + 10 ||
+        typeof rating !== "number" ||
+        !Number.isFinite(rating) ||
+        rating < 0 ||
+        rating > 10
+    ) {
+        return res.status(400).json({
+            message:
+                "Provide a valid title, genre, year, and rating between 0 and 10."
+        });
+    }
+
+    // Generate a unique ID
+    const newId = movies.length
+        ? Math.max(...movies.map((movie) => movie.id)) + 1
+        : 1;
+
+    // Create the new movie
+    const newMovie = {
+        id: newId,
+        title: title.trim(),
+        genre: genre.trim(),
+        year,
+        rating
+    };
+
+    // Save the movie in memory
+    movies.push(newMovie);
+
+    // Return the created movie
+    res.status(201).json({
+        message: "Movie added successfully",
+        movie: newMovie
+    });
+});
+
+// Handle unknown routes
+app.use((req, res) => {
+    res.status(404).json({
+        message: "Route not found"
+    });
+});
+
+// Handle invalid JSON
+app.use((err, req, res, next) => {
+    if (err instanceof SyntaxError && err.status === 400 && "body" in err) {
+        return res.status(400).json({
+            message: "Invalid JSON request body"
+        });
+    }
+
+    next(err);
 });
 
 // Start the server
